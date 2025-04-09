@@ -1,0 +1,343 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  fullName      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  constructionProjects ConstructionProject[]
+  constructionReports  ConstructionReport[]
+  dailyLogs           DailyLog[]
+  equipmentInspections EquipmentInspection[]
+  equipmentTestRuns    EquipmentTestRun[]
+  circulationRoutes    CirculationRoute[]    @relation("RouteCreator")
+  routeMembers         CirculationRouteMember[]
+  circulations         Circulation[]         @relation("CirculationApprover")
+  createdCirculations  Circulation[]         @relation("CirculationCreator")
+  inspectionTemplates  InspectionTemplate[]  @relation("TemplateCreator")
+
+  @@map("users")
+}
+
+model CirculationRoute {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy   User      @relation("RouteCreator", fields: [createdById], references: [id])
+  members     CirculationRouteMember[]
+
+  @@map("circulation_routes")
+}
+
+model CirculationRouteMember {
+  id        String    @id @default(cuid())
+  routeId   String
+  userId    String
+  order     Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  route     CirculationRoute @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([routeId, order])
+  @@map("circulation_route_members")
+}
+
+model Circulation {
+  id          String    @id @default(cuid())
+  dailyLogId  String
+  approverId  String
+  createdById String
+  status      CirculationStatus @default(PENDING)
+  comment     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  dailyLog    DailyLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  approver    User      @relation("CirculationApprover", fields: [approverId], references: [id])
+  createdBy   User      @relation("CirculationCreator", fields: [createdById], references: [id])
+
+  @@map("circulations")
+}
+
+model ConstructionProject {
+  id              String    @id @default(cuid())
+  title           String
+  fiscalYear      Int
+  targetEquipment String
+  status          ProjectStatus
+  description     String?
+  startDate       DateTime
+  endDate         DateTime?
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdBy       User      @relation(fields: [createdById], references: [id])
+  dailyLogEntries DailyLogEntry[]
+  reports         ConstructionReport[]
+  equipment       Equipment[]
+
+  @@map("construction_projects")
+}
+
+model ConstructionReport {
+  id                  String    @id @default(cuid())
+  constructionProjectId String
+  content             String
+  topics              String
+  templateId          String?
+  createdById         String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  constructionProject ConstructionProject @relation(fields: [constructionProjectId], references: [id], onDelete: Cascade)
+  createdBy          User                @relation(fields: [createdById], references: [id])
+  template           InspectionTemplate? @relation(fields: [templateId], references: [id])
+  inspectionResults  InspectionResult[]
+
+  @@map("construction_reports")
+}
+
+model InspectionResult {
+  id          String    @id @default(cuid())
+  reportId    String
+  equipmentId String
+  result      String
+  issues      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  report      ConstructionReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  equipment   Equipment         @relation(fields: [equipmentId], references: [id])
+  measurements Measurement[]
+
+  @@map("inspection_results")
+}
+
+model DailyLog {
+  id          String    @id @default(cuid())
+  date        DateTime  @db.Date
+  status      LogStatus @default(DRAFT)
+  nextWorkDate DateTime @db.Date
+  isHoliday   Boolean   @default(false)
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  entries     DailyLogEntry[]
+  circulations Circulation[]
+
+  @@unique([date, createdById])
+  @@map("daily_logs")
+}
+
+model DailyLogEntry {
+  id                    String    @id @default(cuid())
+  dailyLogId            String
+  constructionProjectId String
+  workStatus           WorkStatus @default(IN_PROGRESS)
+  workDescription      String
+  nextWorkPlan         String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  dailyLog             DailyLog  @relation(fields: [dailyLogId], references: [id], onDelete: Cascade)
+  constructionProject  ConstructionProject @relation(fields: [constructionProjectId], references: [id])
+
+  @@map("daily_log_entries")
+}
+
+model Equipment {
+  id              String    @id @default(cuid())
+  name            String
+  type            String
+  status          EquipmentStatus
+  installationDate DateTime?
+  manufacturer    String?
+  modelNumber     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  inspections     EquipmentInspection[]
+  inspectionResults InspectionResult[]
+  parts           EquipmentPart[]
+  testRuns        EquipmentTestRun[]
+  constructionProjects ConstructionProject[]
+
+  @@map("equipment")
+}
+
+model EquipmentInspection {
+  id            String    @id @default(cuid())
+  equipmentId   String
+  inspectionDate DateTime
+  inspectorId   String
+  findings      String?
+  issues        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  inspector     User      @relation(fields: [inspectorId], references: [id])
+
+  @@map("equipment_inspections")
+}
+
+model EquipmentPart {
+  id              String    @id @default(cuid())
+  equipmentId     String
+  partName        String
+  partNumber      String?
+  manufacturer    String?
+  supplier        String?
+  lastOrderedDate DateTime?
+  lastOrderedPrice Decimal?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@map("equipment_parts")
+}
+
+model EquipmentTestRun {
+  id            String    @id @default(cuid())
+  equipmentId   String
+  testDate      DateTime
+  pressure      Decimal?
+  currentValue  Decimal?
+  operatorId    String
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  operator      User      @relation(fields: [operatorId], references: [id])
+
+  @@map("equipment_test_runs")
+}
+
+model InspectionTemplate {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  createdById String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy   User      @relation("TemplateCreator", fields: [createdById], references: [id])
+  items       InspectionTemplateItem[]
+  reports     ConstructionReport[]
+
+  @@map("inspection_templates")
+}
+
+model InspectionTemplateItem {
+  id          String    @id @default(cuid())
+  templateId  String
+  itemName    String
+  description String?
+  order       Int
+  required    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  template    InspectionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  measurementFields MeasurementField[]
+
+  @@unique([templateId, order])
+  @@map("inspection_template_items")
+}
+
+model MeasurementField {
+  id              String           @id @default(cuid())
+  templateItemId  String
+  name            String
+  type            MeasurementType
+  unit            String
+  minValue        Float?
+  maxValue        Float?
+  interval        Int?             // 計測間隔（分）
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  templateItem    InspectionTemplateItem @relation(fields: [templateItemId], references: [id], onDelete: Cascade)
+  measurements    Measurement[]
+
+  @@map("measurement_fields")
+}
+
+model Measurement {
+  id                String    @id @default(cuid())
+  measurementFieldId String
+  value             Float
+  measuredAt        DateTime  @default(now())
+  inspectionResultId String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  measurementField  MeasurementField @relation(fields: [measurementFieldId], references: [id], onDelete: Cascade)
+  inspectionResult InspectionResult @relation(fields: [inspectionResultId], references: [id], onDelete: Cascade)
+
+  @@map("measurements")
+}
+
+enum MeasurementType {
+  NUMBER
+  TEMPERATURE
+  PRESSURE
+  CURRENT
+  VOLTAGE
+  FLOW_RATE
+}
+
+enum ProjectStatus {
+  ONGOING
+  COMPLETED
+  DELAYED
+}
+
+enum LogStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+}
+
+enum WorkStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum EquipmentStatus {
+  OPERATIONAL
+  UNDER_INSPECTION
+  STANDBY
+  MAINTENANCE
+}
+
+enum CirculationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
