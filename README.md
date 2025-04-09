@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 工事管理アプリケーション（Next.js学習用）
 
-## Getting Started
+## 概要
+このプロジェクは工事管理と設備管理、業務日誌の機能を持つアプリケーションです。
+ユーザーは会員登録後、工事情報の管理及び設備情報の管理、業務日誌作成回覧をすることができます。
 
-First, run the development server:
+## 作成した目的
+現在、エクセル及び紙で管理されている工事情報や設備の点検記録や部品リストを一つのアプリケーションとして管理することで業務効率化を図りたい。
+また、現在サービス期限が切れた業務日誌の機能を含めることで、より工事管理ができる。
+
+## 機能一覧
+### 工事管理
+・工事情報一覧機能（検索機能や工事実績出力機能付き）
+・工事情報新規作成機能
+・月間工程表作成機能
+・工事報告書作成機能
+
+### 設備管理
+・設備情報一覧機能（検索機能）
+・設備情報編集機能（追加、情報編集）
+・設備点検記録一覧（検索機能）及び作成機能
+・部品一覧機能（検索機能）及び情報編集、CSV出力機能
+
+### 業務日誌
+・業務日誌作成、回覧機能（回覧状態確認可能）
+・工事完了操作
+
+### 回覧ルート設定機能
+・業務日誌の回覧ルート柵瀬機能
+
+### 点検テンプレート作成
+・各設備の試運転データ記録用のテンプレート作成機能
+　圧力(Mpa)、流量(t/h)、電流値(A)、振動値(μm)等
+
+## 使用技術（実行環境）
+・Docker 26.1.4
+・postgres 14.4-alpine
+・node 22.12.0
+・next 15.2.2"
+・prisma
+
+
+## 環境構築（修正中）
+### Next.js プロジェクト
+
+このプロジェクトは、[`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app) を使用して作成された [Next.js](https://nextjs.org) プロジェクトです。
+
+### 開発サーバーの起動
+
+開発サーバーを起動するには、以下のコマンドを実行します：
 
 ```bash
 npm run dev
-# or
+# または
 yarn dev
-# or
+# または
 pnpm dev
-# or
+# または
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+以下は、コード部分を保持したままREADME形式で直接貼り付けできる内容です：
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+http://localhost:3000 をブラウザで開いて、結果を確認してください。
+ を編集することでページの内容を変更できます。ファイルを編集すると、ページが自動的に更新されます。
+フォントの最適化
+このプロジェクトでは、 を利用してフォントの最適化と読み込みを自動化しています。使用されているフォントファミリーは Geist です。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+さらに詳しく学ぶ
+Next.js について詳しく知りたい場合は、以下のリソースをご覧ください：
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+また、Next.js GitHub リポジトリ もチェックしてみてください。フィードバックや貢献は大歓迎です！
+Vercel でのデプロイ
+Next.js アプリをデプロイする最も簡単な方法は、Next.js の開発者が提供する Vercel プラットフォーム を利用することです。
+デプロイの詳細については、Next.js のデプロイ ドキュメント をご覧ください。
